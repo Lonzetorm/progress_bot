@@ -18,7 +18,12 @@ final class TelegramSender
         $this->output = $output;
     }
 
-    public function sendMessage(int $chatId, string $message, string $parseMode = 'HTML'): void
+    public function sendMessage(
+        int $chatId, 
+        string $message, 
+        string $parseMode = 'HTML', 
+        array $buttons = []
+    ): void
     {
         $tgApiToken = $this->parameterBag->get('telegram_http_api_token');
         if (empty($tgApiToken)) {
@@ -37,13 +42,19 @@ final class TelegramSender
         }
         // Отправляем HTTP-запрос. Можно использовать обычный CURL
 
+        $jsonContent = [
+            'chat_id' => $chatId,
+            'parse_mode' => $parseMode,
+            'text' => $parseMode == 'HTML' ? strip_tags($message, '<b><i><u><s><span><a><code><pre>'): $message
+        ];
+        if (! empty($buttons)) {
+            $jsonContent['reply_markup'] = json_encode([
+                'inline_keyboard' => $buttons,
+            ]);
+        }
         $response = HttpClient::create()->request(
             'POST', 'https://api.telegram.org/bot' . $tgApiToken . '/sendMessage', [
-                'json' => [
-                    'chat_id' => $chatId,
-                    'parse_mode' => $parseMode,
-                    'text' => $parseMode == 'HTML' ? strip_tags($message, '<b><i><u><s><span><a><code><pre>'): $message
-                ]
+                'json' => $jsonContent
             ]
         );
         if ($response->getStatusCode() != 200) {

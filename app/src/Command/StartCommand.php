@@ -16,7 +16,21 @@ use App\Service\TelegramSender;
 class StartCommand extends Command
 {
     const ARG_CHAT_ID = 'chatId';
-    const MESSAGE_START = "Привет! Чтобы узнать подключен ли ваш аккаунт сообщите мне код в формате XXX-XXX";
+    const MESSAGE_START = "Привет! Вот что может этот бот:<br>
+    - Отслеживать прогресс по чему угодно (для этого нажмите Начать)
+    - Продолжить отслеживать прогресс (если вы уже начали отслеживать, нажмите Продолжить)";
+    const START_BUTTONS = [
+        [
+	        [
+		        'text' => 'Начать',
+		        'callback_data' => 'startNew',
+            ],
+            [
+		        'text' => 'Продолжить',
+		        'callback_data' => 'track',
+            ],
+        ]
+    ];
 
     public function __construct(private TelegramSender $telegramSender)
     {
@@ -39,7 +53,9 @@ class StartCommand extends Command
         }
         $this->telegramSender->sendMessage(
             $chatId,
-            self::MESSAGE_START
+            self::MESSAGE_START,
+            'HTML',
+            self::START_BUTTONS
         );
 
         return Command::SUCCESS;
