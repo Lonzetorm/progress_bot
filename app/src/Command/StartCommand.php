@@ -31,6 +31,7 @@ class StartCommand extends Command
             ],
         ]
     ];
+    const DEFAULT_PARSE_MODE = 'HTML';
 
     public function __construct(private TelegramSender $telegramSender)
     {
@@ -54,7 +55,7 @@ class StartCommand extends Command
         $this->telegramSender->sendMessage(
             $chatId,
             self::MESSAGE_START,
-            'HTML',
+            self::DEFAULT_PARSE_MODE,
             self::START_BUTTONS
         );
 
