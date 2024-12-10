@@ -13,6 +13,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Command\StartCommand;
+use App\Service\TelegramSender;
 
 class WebhookController extends AbstractController 
 {
@@ -31,36 +32,48 @@ class WebhookController extends AbstractController
             $updateRequest = json_decode($request->getContent(), true);
             $application = new Application($kernel);
             $application->setAutoExit(false);
-            switch ($updateRequest['message']['text']) {
-                case '/start':
-                    $logger->debug('Helloo', ['telegram' => 'start']);
-                    $input = new ArrayInput([
-                        'command' => 'app:telegram:command:start',
-                        StartCommand::ARG_CHAT_ID => $updateRequest['message']['chat']['id']
-                    ]);
-                    $output = new BufferedOutput();
-                    $application->run($input, $output);
-                    $content = $output->fetch();
-                    $logger->debug($content, ['telegram' => 'start']);
-                    break;
-                default:
-                    // $input = new ArrayInput([
-                    //     'command' => 'app:telegram:command:dialog'
-                    //     // https://symfony.com/doc/current/console/command_in_controller.html
-                    //     ,
-                    //     DialogCommand::OPTION_USERNAME => $updateRequest['from']['username'],
-                    //     DialogCommand::ARG_CHAT_ID => $updateRequest['message']['chat']['id'],
-                    //     DialogCommand::ARG_CHAT_TEXT => $updateRequest['message']['text'],
-                    // ]);
-                    // $output = new BufferedOutput();
-                    // $application->run($input, $output);
-                    // $content = $output->fetch();
-                    // $logger->debug(\$content, ['telegram', 'default']);
-                    break;
+            if ($updateRequest['callback_query']) {
+                $commandName = $updateRequest['callback_query']['data'];
+                $logger->debug($updateRequest['callback_query']['data']);
+                if ($commandName === 'startNew') {
+                    $telegramSender = new TelegramSender(private LoggerInterface $logger, private ParameterBagInterface $parameterBag);
+                    $telegramSender->sendMessage(
+                        $updateRequest['callback_query']['message']['chat']['id'],
+                        'Введите название',
+                        'HTML'
+                    );
+                }
+            } else {
+                switch ($updateRequest['message']['text']) {
+                    case '/start':
+                        $input = new ArrayInput([
+                            'command' => 'app:telegram:command:start',
+                            StartCommand::ARG_CHAT_ID => $updateRequest['message']['chat']['id']
+                        ]);
+                        $output = new BufferedOutput();
+                        $application->run($input, $output);
+                        $content = $output->fetch();
+                        $logger->debug($content, ['telegram' => 'start']);
+                        break;
+                    default:
+                        // $input = new ArrayInput([
+                        //     'command' => 'app:telegram:command:dialog'
+                        //     // https://symfony.com/doc/current/console/command_in_controller.html
+                        //     ,
+                        //     DialogCommand::OPTION_USERNAME => $updateRequest['from']['username'],
+                        //     DialogCommand::ARG_CHAT_ID => $updateRequest['message']['chat']['id'],
+                        //     DialogCommand::ARG_CHAT_TEXT => $updateRequest['message']['text'],
+                        // ]);
+                        // $output = new BufferedOutput();
+                        // $application->run($input, $output);
+                        // $content = $output->fetch();
+                        // $logger->debug(\$content, ['telegram', 'default']);
+                        break;
+                }
             }
         } catch (\Throwable $e) {
             $logger->critical($e->getMessage() . '::' . $e->getFile() . ':' . $e->getLine(), ['telegram_bot_controller']);
         }
-        return $this->json(['Hello']);
+        return $this->json([]);
     }
 }
