@@ -17,6 +17,8 @@ use App\Service\TelegramSender;
 
 class WebhookController extends AbstractController 
 {
+    public function __construct(private TelegramSender $telegramSender) {}
+
     /**
      * @Route("/api/pub/telegram/webhook")
      */
@@ -32,12 +34,11 @@ class WebhookController extends AbstractController
             $updateRequest = json_decode($request->getContent(), true);
             $application = new Application($kernel);
             $application->setAutoExit(false);
-            if ($updateRequest['callback_query']) {
+            if (isset($updateRequest['callback_query'])) {
                 $commandName = $updateRequest['callback_query']['data'];
                 $logger->debug($updateRequest['callback_query']['data']);
                 if ($commandName === 'startNew') {
-                    $telegramSender = new TelegramSender(private LoggerInterface $logger, private ParameterBagInterface $parameterBag);
-                    $telegramSender->sendMessage(
+                    $this->telegramSender->sendMessage(
                         $updateRequest['callback_query']['message']['chat']['id'],
                         'Введите название',
                         'HTML'
