@@ -2,6 +2,6 @@ controllers:
     resource: ../src/Controller/
     type: attribute
 
-app_test:
-    path: /api/pub/telegram/webhook
-    controller: App\Controller\WebhookController::botListenWebhook
+# app_test:
+#     path: /api/pub/telegram/webhook
+#     controller: App\Controller\WebhookController::botListenWebhook
