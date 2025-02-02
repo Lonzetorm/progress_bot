@@ -13,6 +13,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Command\StartCommand;
+use App\Command\TrackedListCommand;
 use App\Service\TelegramSender;
 
 class WebhookController extends AbstractController 
@@ -43,6 +44,17 @@ class WebhookController extends AbstractController
                         'Введите название',
                         'HTML'
                     );
+                    // Создание записи в таблице conversations
+                }
+                if ($commandName === 'track') {
+                    $input = new ArrayInput([
+                        'command' => 'app:telegram:command:show_tracked_list',
+                        TrackedListCommand::ARG_CHAT_ID => $updateRequest['callback_query']['message']['chat']['id']
+                    ]);
+                    $output = new BufferedOutput();
+                    $application->run($input, $output);
+                    $content = $output->fetch();
+                    $logger->debug($content, ['telegram' => 'show_tracked_list']);
                 }
             } else {
                 switch ($updateRequest['message']['text']) {
